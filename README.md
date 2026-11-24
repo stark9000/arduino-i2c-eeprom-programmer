@@ -1,60 +1,98 @@
-# EEPROM Programmer
+# Arduino I2C EEPROM Programmer
 
-Read, write, verify and erase 24Cxx I2C EEPROMs from the PC, with an Arduino Nano as the USB–I2C bridge.
+Read, write, verify and erase **24Cxx I2C EEPROMs** (24C01 – 24CM02) from your PC, using an **Arduino Nano** as the USB-to-I2C bridge.
+It comes with a dark Java Swing desktop app with a live hex/binary view, auto chip detection and read-back verification.
 
-**Chips:** 24C01, 24C02, 24C04, 24C08, 24C16, 24C32, 24C64, 24C128, 24C256, 24C512, 24CM01, 24CM02
+![Java 8](https://img.shields.io/badge/Java-8-orange)
+![Arduino Nano](https://img.shields.io/badge/Arduino-Nano-00979D)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue)
+
+![Main window](screenshots/01-main-window.png)
+
+## Features
+
+- **Supports 12 chips:** 24C01, 24C02, 24C04, 24C08, 24C16, 24C32, 24C64, 24C128, 24C256, 24C512, 24CM01, 24CM02
+- **Auto-detects the chip** when you connect. Detection only changes 2–3 bytes and restores them afterwards.
+- **Fast page writes**: every block is read back and checked as it's written, so no separate verify pass is needed.
+- **Read, Write, Verify, Blank check, Erase, and CRC-16 checksum** comparing the chip with your file.
+- **Live progress in the hex view:** written bytes turn green, the block being sent turns orange, and you see speed and time left.
+- **Difference highlighting:** bytes that differ between your file and the chip are shown in red, with a *Next difference* button to step through them.
+- **Hex editor:** edit bytes in place, fill a range, go to an address, and switch between hex (16 bytes per row) and binary (8 bytes per row).
+- **File formats:** `.bin` and Intel `.hex`, both open and save. You can also drag and drop files onto the window.
+- **Safe to use:** confirmation before overwriting the chip, a size check against the selected chip, Cancel (Esc) at any time, and timeouts with automatic retries.
+- **Dark UI** built with plain Swing: no external look-and-feel and no Nimbus. Sized to fit a 1366×768 screen.
+- **One dependency:** [jSSC](https://github.com/java-native/jssc) for the serial port.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Write confirmation](screenshots/02-write-confirm.png) | ![Writing](screenshots/03-writing.png) |
+| **Write confirmation**: shows how much will be written to which chip | **Writing**: green = done, orange = block being sent |
+| ![Verify differences](screenshots/04-verify-differences.png) | ![Binary view](screenshots/05-binary-view.png) |
+| **Verify**: differing bytes highlighted in red | **Binary view**: 8 bytes per row, differences still marked |
 
 ## Hardware
 
-| EEPROM pin | Nano |
+| EEPROM pin | Arduino Nano |
 |---|---|
 | SDA | A4 |
 | SCL | A5 |
 | VCC | 5V |
-| GND, A0, A1, A2, WP | GND |
+| GND | GND |
+| A0, A1, A2 | GND |
+| WP | GND (write enabled) |
 
-Use 4.7 kΩ pull-ups on SDA and SCL if your EEPROM module doesn't have them. WP must be at GND or writes fail.
-Auto-detect assumes A0/A1/A2 are at GND.
+Add 4.7 kΩ pull-up resistors on SDA and SCL if your EEPROM module doesn't have them.
+The app expects A0–A2 tied to GND (device address `0x50`).
 
-## Setup
+## Getting started
 
-1. Open `eeprom_programmer/eeprom_programmer.ino` in the Arduino IDE and upload it to the Nano (board *Arduino Nano*).
-   The app checks the firmware version and refuses to work with the old sketch.
-2. Open this folder in NetBeans as a project (Java 8). The only library is `lib/jssc-2.9.2.jar`.
-3. Run. Main class: `eepromprogrammer.Main`.
+### 1. Flash the Arduino
 
-## Using it
+Open `eeprom_programmer/eeprom_programmer.ino` in the Arduino IDE, select **Arduino Nano**, and upload.
+No extra libraries are needed; it only uses `Wire`.
 
-1. Pick the **Port** → **Connect**. The Nano resets when the port opens; after about 2 s the app finds the board and **auto-detects the chip**.
-   Use **Detect** again after swapping chips, or pick the chip from the list.
-2. **Open file…** (or drag a file onto the window) to load a `.bin` or Intel `.hex` file into the **Buffer** tab.
-3. **Write** writes the buffer. The board reads back every block and checks it, so no separate verify pass is needed.
-4. **Read** reads the whole chip into the **Chip** tab. If a buffer is loaded, differences are highlighted in red.
+### 2. Build and run the app
 
-| Button | What it does |
-|---|---|
-| Read (F5) | Read the whole chip into the Chip tab |
-| Write (F6) | Write the buffer; each block is read back and checked |
-| Verify (F7) | Read the chip and compare it with the buffer |
-| Blank check | Check that every byte is 0xFF |
-| Erase | Fill the chip with 0xFF |
-| Checksum | CRC-16 of the chip, compared with the buffer |
-| New blank | New chip-sized buffer filled with 0xFF |
-| Chip → buffer | Copy the last read into the buffer (for cloning or editing) |
-| Fill… | Fill an address range (or the selected cells) with a value |
-| Compare | Highlight differences between buffer and last read |
-| Cancel (Esc) | Stop the running operation |
+The project is a NetBeans Java project (Java 8).
 
-- Double-click a cell in the Buffer tab to edit it. Type hex, or 8 binary digits in Binary view.
-- **Go to address** (Ctrl+G) jumps to a hex address; **Next difference** steps through the red cells.
-- Hex view shows 16 bytes per row and Binary view 8, so both fit a 1366 px wide screen.
-- During Read/Write, cells turn green once done and orange while being transferred.
-- The app remembers your port, chip, view and last folder.
-- Dark theme, built with no external library and without Nimbus: Metal plus a dark colour theme and a few flat painters in `Theme.java`.
-  The button icons and app icon are PNG files in `src/eepromprogrammer/icons/` and are packed into the jar.
-  `app.ico` in the same folder is there if you wrap the jar as an .exe.
+- **NetBeans:** open the folder as a project and press *Run*. The main class is `eepromprogrammer.Main`.
+- **Built jar:** after *Clean and Build*, run
 
-## Expected speed (Nano at 115200 baud)
+  ```
+  java -jar dist/EEPROMProgrammer.jar
+  ```
+
+  Keep `dist/lib/jssc-2.9.2.jar` next to it.
+
+### 3. Use it
+
+1. Pick the serial port and click **Connect**. The Nano resets, and after about 2 s the app finds the board and detects the chip.
+2. Click **Open file…** (or drag a file onto the window) to load a `.bin` or `.hex` file into the **Buffer** tab.
+3. Click **Write**. Each block is written and read back.
+4. Click **Read** to dump the chip into the **Chip** tab, then **Save chip read…** to save it as a file.
+
+| Button | Shortcut | What it does |
+|---|---|---|
+| Read | F5 | Read the whole chip into the Chip tab |
+| Write | F6 | Write the buffer to the chip, checking each block |
+| Verify | F7 | Read the chip and compare it with the buffer |
+| Blank check | | Check that every byte is `0xFF` |
+| Erase | | Fill the chip with `0xFF` |
+| Checksum | | CRC-16 of the chip, compared with the buffer |
+| New blank | | New chip-sized buffer filled with `0xFF` |
+| Chip → buffer | | Copy the last read into the buffer (for cloning or editing) |
+| Fill… | | Fill an address range or the selected cells with a value |
+| Compare | | Highlight differences between the buffer and the last read |
+| Cancel | Esc | Stop the running operation |
+| Open / Save | Ctrl+O / Ctrl+S | Load or save the buffer |
+| Go to address | Ctrl+G | Jump to a hex address |
+
+## Speed
+
+These are typical estimates with a Nano at 115200 baud. Actual speed depends on the chip's write-cycle time.
 
 | Chip | Read | Write + check |
 |---|---|---|
@@ -62,48 +100,55 @@ Auto-detect assumes A0/A1/A2 are at GND.
 | 24C512 (64 KB) | ~20 s | ~40 s |
 | 24CM02 (256 KB) | ~1.5 min | ~2.5 min |
 
-These are estimates; actual speed depends on the chip's write-cycle time.
+## Serial protocol
+
+The firmware speaks a simple text protocol at 115200 baud: one command per line, with all numbers in hex.
+You can use it from any serial terminal or your own software.
+
+| Command | Reply | Description |
+|---|---|---|
+| `V` | `VER:2` | Firmware version |
+| `P` | `PONG` | Ping |
+| `T:<size>` | `OK` | Select chip by size in bytes |
+| `S` | `SIZE:<size>` / `ERR:NOCHIP` | Auto-detect chip |
+| `R:<addr>:<len>` | `D:<hexdata>:<sum>` | Read up to 64 bytes |
+| `W:<addr>:<hexdata>:<sum>` | `OK` / `ERR:CHK` / `ERR:I2C` / `ERR:VERIFY:<addr>` | Page write with read-back check (up to 64 bytes) |
+| `B:<addr>:<len>:<val>` | `OK` / `NE:<addr>` | Blank check |
+| `F:<addr>:<len>:<val>` | `OK` / `ERR:…` | Fill / erase |
+| `C:<addr>:<len>:<init>` | `CRC:<crc16>` | CRC-16/CCITT (init `FFFF`) |
+
+`<sum>` is the 8-bit sum of the data bytes.
+
+## Project structure
+
+```
+eeprom_programmer/
+  eeprom_programmer.ino   Arduino firmware
+src/eepromprogrammer/
+  Main.java               entry point
+  MainWindow.java         main window and all operations
+  HexView.java            hex/binary table with progress and difference colours
+  Programmer.java         firmware protocol (timeouts, retries, checksums)
+  SerialLink.java         jSSC serial port, line based
+  ChipType.java           supported chips
+  HexFiles.java           .bin and Intel HEX load/save
+  Theme.java              dark theme and flat UI painters
+  icons/                  button icons and app icon (.png, .ico)
+src/org/slf4j/impl/
+  StaticLoggerBinder.java silences SLF4J's startup warning (bundled in jSSC)
+lib/
+  jssc-2.9.2.jar
+```
 
 ## Troubleshooting
 
-- **"No answer from the board"**: the v2 sketch isn't uploaded, or another program (e.g. the Arduino serial monitor) has the port open.
-- **"No chip detected"**: check wiring and pull-ups and that the chip is seated. You can still select the chip by hand.
-- **Write fails with "read-back mismatch"**: WP isn't at GND, the wrong chip type is selected, or the chip is worn out.
-- **Very old 24C01/24C02 parts**: if reads are unreliable, change `Wire.setClock(400000)` to `100000` in the sketch.
-- jSSC may print an `SLF4J: Failed to load class` note in the console at start-up. It's harmless.
-
-## Serial protocol (firmware v2)
-
-115200 baud, one command per line, all numbers in hex. `<sum>` is the 8-bit sum of the data bytes.
-
-| Command | Reply |
+| Problem | Fix |
 |---|---|
-| `V` | `VER:2` |
-| `P` | `PONG` |
-| `T:<size>` | `OK` (select chip by size in bytes) |
-| `S` | `SIZE:<size>` or `ERR:NOCHIP` (auto-detect) |
-| `R:<addr>:<len>` | `D:<hexdata>:<sum>` (len up to 0x40 = 64 bytes) |
-| `W:<addr>:<hexdata>:<sum>` | `OK`, `ERR:CHK`, `ERR:I2C`, `ERR:VERIFY:<addr>` |
-| `B:<addr>:<len>:<val>` | `OK` or `NE:<addr>` (blank check) |
-| `F:<addr>:<len>:<val>` | `OK` or `ERR:…` (fill / erase) |
-| `C:<addr>:<len>:<init>` | `CRC:<crc16>` (CRC-16/CCITT, init FFFF) |
+| *No answer from the board* | Upload the sketch. Close any other program using the port (e.g. the Arduino serial monitor). |
+| *No chip detected* | Check wiring, pull-ups and that the chip is seated. You can still pick the chip by hand. |
+| *Read-back mismatch* while writing | Tie WP to GND, select the right chip type, or the chip may be worn out. |
+| Unreliable reads on very old 24C01/02 parts | Change `Wire.setClock(400000)` to `100000` in the sketch. |
 
-Auto-detect temporarily writes 2 bytes at 0x005A (on 24C01–24C16, bytes 0–2) and restores them afterwards.
+## License
 
-## Project layout
-
-```
-src/eepromprogrammer/
-  Main.java         entry point (installs the theme)
-  Theme.java        dark theme: colours, flat buttons/tabs/scrollbars/progress/combo, icon loading
-  MainWindow.java   the window and all operations
-  HexView.java      hex/binary table with progress and difference colours
-  Programmer.java   firmware protocol (timeouts, retries, checksums)
-  SerialLink.java   jSSC serial port, line based
-  LineChannel.java  interface between the two above
-  ChipType.java     chip list (size, page size)
-  HexFiles.java     .bin and Intel HEX load/save
-  icons/            20 px button icons, app_16…app_256.png, app.ico
-eeprom_programmer/eeprom_programmer.ino   Arduino firmware v2
-lib/jssc-2.9.2.jar
-```
+Released under the [MIT License](LICENSE).
